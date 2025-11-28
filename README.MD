@@ -58,39 +58,25 @@ The application demonstrates full-stack integration - combining Node.js server l
 
 ---
 
-## dotenv
+## Access Control Summary
 
-To avoid storing sensitive information directly in the source code, the application uses the dotenv module. This allows all database credentials to be stored in a separate .env file rather than inside index.js.
+Session-based access control was added using express-session. The redirectLogin middleware checks whether req.session.userId is set. If not, the user is redirected to the /users/login page.
 
-**How it was implemented:**
+Protected Routes:
 
-- Installed using npm install dotenv.
-- .env file was created in the project root containing the database host, username, password, and database name.
-- require('dotenv').config(); was added at the top of index.js to load environment variables.
-- The MySQL connection pool was updated to use process.env.DB_HOST, process.env.DB_USER, etc.
-- .env was added to .gitignore so credentials are never uploaded to GitHub.
+- /users/list: Only logged-in users can view the list of users.
+- /users/audit: Only logged-in users can view the audit log.
+- /logout: Only available to logged-in users.
 
-## Audit Logging
+Public Routes:
 
-To track login activity and improve security, an audit logging system was implemented. This records both successful and failed login attempts.
+- / (home page)
+- /about
+- /users/register and /users/registered
+- /users/login and /users/loggedin
 
-**How it was implemented:**
-
-1. I created a new database table called `audit_log` containing:
-
-   - `username` (the supplied email)
-   - `success` (true or false)
-   - `timestamp` (automatically recorded)
-
-2. In the `/users/loggedin` login route, an INSERT query is executed after each login attempt:
-
-   - On correct password → a record is saved with `success = true`.
-   - On incorrect password or unknown user → a record is saved with `success = false`.
-
-3. A new route `/users/audit` was added.  
-   This selects all audit records and displays them in a simple table for review.
-
-This feature makes it possible to view login behaviour, detect suspicious activity, and keep a basic audit trail of authentication events.
+Testing:
+When not logged in, attempts to access /users/list or /users/audit redirect to the login page. After logging in, these pages become accessible. The logout route successfully destroys the session and prevents further access to protected pages.
 
 ## Access the live site:
 
