@@ -2,14 +2,7 @@
 const express = require("express")
 const router = express.Router();
 const bcrypt = require('bcrypt');
-
-const redirectLogin = (req, res, next) => {
-    if (!req.session.userId ) {
-      res.redirect('/users/login'); // redirect to the login page
-    } else { 
-        next (); // move to the next middleware function
-    } 
-}
+const redirectLogin = require('../middleware/redirectLogin');
 
 
 router.get('/register', function (req, res, next) {
