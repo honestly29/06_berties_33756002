@@ -3,6 +3,15 @@ const express = require("express")
 const router = express.Router();
 const bcrypt = require('bcrypt');
 
+const redirectLogin = (req, res, next) => {
+    if (!req.session.userId ) {
+      res.redirect('/users/login'); // redirect to the login page
+    } else { 
+        next (); // move to the next middleware function
+    } 
+}
+
+
 router.get('/register', function (req, res, next) {
     res.render('register.ejs')
 })
@@ -29,10 +38,11 @@ router.post('/registered', function (req, res, next) {
                 }
                 return res.send("Database error: " + err.message);
             }
-            else
-                result = 'Hello '+ req.body.first + ' '+ req.body.last +' you are now registered!  We will send an email to you at ' + req.body.email;
+            else {
+                let result = 'Hello '+ req.body.first + ' '+ req.body.last +' you are now registered!  We will send an email to you at ' + req.body.email;
                 result += 'Your password is: '+ req.body.password +' and your hashed password is: '+ hashedPassword;
                 res.send(result);
+            }
         });
     });       
 }); 
@@ -76,6 +86,9 @@ router.post('/loggedin', function(req, res, next) {
                     "INSERT INTO audit_log (username, success) VALUES (?, true)",
                     [username]
                 );
+                // Save user session here, when login is successful
+                req.session.userId = req.body.username;
+
                 return res.send('Login successful!');
             }
             else {
@@ -92,7 +105,7 @@ router.post('/loggedin', function(req, res, next) {
 
 
 // Audit page for listing login attempts
-router.get('/audit', function(req, res, next) {
+router.get('/audit', redirectLogin, function(req, res, next) {
     const sqlSelectAllAudits = "SELECT * FROM audit_log ORDER BY timestamp DESC";
 
     db.query(sqlSelectAllAudits, (err, results) => {
@@ -104,14 +117,11 @@ router.get('/audit', function(req, res, next) {
 
 
 // Page for listing current users in the database
-router.get('/list', function(req, res, next) {
-    const sqlSelectAllUsers = "SELECT * FROM users"; // query database to get all the users
+router.get('/list', redirectLogin, function(req, res, next) {
+    const sqlSelectAllUsers = "SELECT * FROM users";
     db.query(sqlSelectAllUsers, (err, result) => {
-        if (err) {
-            next(err)
-        }
-        //console.log(result);
-        res.render("listusers.ejs", {users : result});
+        if (err) return next(err);
+        res.render("listusers.ejs", { users: result });
     });
 });
 
