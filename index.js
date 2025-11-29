@@ -5,6 +5,7 @@ const path = require('path')
 const mysql = require('mysql2');
 const session = require('express-session');
 require('dotenv').config();
+const expressSanitizer = require('express-sanitizer');
 
 
 // Create the express application object
@@ -16,6 +17,9 @@ app.set('view engine', 'ejs')
 
 // Set up the body parser 
 app.use(express.urlencoded({ extended: true }))
+
+// Create an input sanitizer
+app.use(expressSanitizer());
 
 // Create a session
 app.use(session({

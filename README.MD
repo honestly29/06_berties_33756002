@@ -116,6 +116,50 @@ Pages without validation:
 
 Overall, validation is applied to all routes that process user submitted form data, and is not used on purely read only or static pages where there is nothing to validate.
 
+## Sanitisation
+
+The express-sanitizer module is used to remove potentially dangerous HTML or
+JavaScript from user-submitted text fields, preventing XSS attacks. Sanitisation is
+applied immediately after body parsing in index.js using:
+
+app.use(expressSanitizer());
+
+Registration form
+The following fields are sanitised because they contain text entered by the user and
+may be displayed later in HTML pages:
+
+- first
+- last
+- username
+- email
+
+These fields are protected using req.sanitize() before being inserted into the
+database or rendered to the browser.
+
+The password field is intentionally not sanitised. Sanitising a password would alter
+the string before hashing it, causing mismatched hashes and failed logins. Passwords
+should always be processed exactly as entered.
+
+Other forms
+Sanitisation was also applied to other text inputs in the application:
+
+- /books/addbook : the book name field is sanitised
+- /books/search : the search_text query parameter is sanitised
+- /users/login : the username field is sanitised
+
+Fields that should not be sanitised:
+
+- Password fields (as explained above)
+- Numeric fields such as price and quantity, which already undergo numeric validation
+  and should not have their characters removed or altered.
+
+Static GET pages (list, audit, bargain books, about, home) do not accept text input
+and therefore do not require sanitisation.
+
+Overall, sanitisation is applied to all free-text fields submitted by the user that
+may be rendered back onto a page, ensuring protection against common XSS vectors
+such as <script> tags, event handlers and JavaScript URLs.
+
 ## dotenv
 
 To avoid storing sensitive information directly in the source code, the application uses the dotenv module. This allows all database credentials to be stored in a separate .env file rather than inside index.js.

@@ -10,8 +10,9 @@ router.get('/search',function(req, res, next){
 });
 
 router.get('/search-result', (req, res, next) => {
-    // get the search text from the form
-    const search_text = (req.query.search_text || '').trim();
+    // get sanatised search text from the form
+    const search_text = req.sanitize((req.query.search_text || '').trim());
+
     // if user didn't type anything, display empty results page
     if (!search_text) return res.render('searchresults.ejs', { availableBooks: [], search_text });
 
@@ -69,16 +70,18 @@ router.post(
         }
 
         const sqlInsertBook = "INSERT INTO books (name, price) VALUES (?, ?)";
-        const newrecord = [req.body.name, req.body.price];
+        const name = req.sanitize(req.body.name);
+        const price = req.body.price; 
+        const newrecord = [name, price];
 
         db.query(sqlInsertBook, newrecord, (err, result) => {
             if (err) return next(err);
 
             res.send(
                 'This book is added to the database, name: ' +
-                req.body.name +
+                name +
                 ', price: ' +
-                req.body.price
+                price
             );
         });
     }

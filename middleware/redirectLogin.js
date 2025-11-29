@@ -2,7 +2,7 @@ function redirectLogin(req, res, next) {
     if (!req.session.userId ) {
       res.redirect((process.env.DB_BASE_PATH || '') + '/users/login');
     } else { 
-        next (); // move to the next middleware function
+        next (); 
     } 
 }
 module.exports = redirectLogin;

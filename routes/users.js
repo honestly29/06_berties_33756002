@@ -56,7 +56,11 @@ router.post(
             }
 
             const sqlInsertUser = "INSERT INTO users (username, first_name, last_name, email, hashed_password) VALUES (?,?,?,?,?)";
-            const newrecord = [req.body.username, req.body.first, req.body.last, req.body.email, hashedPassword];
+            const first = req.sanitize(req.body.first);
+            const last = req.sanitize(req.body.last);
+            const username = req.sanitize(req.body.username);
+            const email = req.sanitize(req.body.email);
+            const newrecord = [username, first, last, email, hashedPassword];
 
             db.query(sqlInsertUser, newrecord, (err, result) => {
                 if (err) {
@@ -65,8 +69,7 @@ router.post(
                     }
                     return res.send("Database error: " + err.message);
                 } else {
-                    let message = 'Hello ' + req.body.first + ' ' + req.body.last + ', you are now registered! We will send an email to ' + req.body.email;
-                    message;
+                    let message = 'Hello ' + first + ' ' + last + ', you are now registered! We will send an email to ' + email;
                     res.send(message);
                 }
             });
@@ -105,8 +108,8 @@ router.post(
             });
         }
 
-        const username = req.body.username;
-        const password = req.body.password;
+        const username = req.sanitize(req.body.username);
+        const password = req.body.password; 
 
         const sqlSelectHashedPassword = 'SELECT hashed_password FROM users WHERE username = ?';
 
