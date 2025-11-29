@@ -18,11 +18,24 @@ router.post(
     [
         check('email')
             .isEmail()
+            .normalizeEmail()
             .withMessage('Please enter a valid email'),
 
         check('username')
             .isLength({ min: 5, max: 20 })
-            .withMessage('Username must be between 5 and 20 characters')
+            .withMessage('Username must be between 5 and 20 characters'),
+        
+        check('password')
+            .isLength({ min: 8 })
+            .withMessage('Password must be at least 8 characters long'),
+        
+        check('first')
+            .notEmpty()
+            .withMessage('First name is required'),
+        
+        check('last')
+            .notEmpty()
+            .withMessage('Last name is required'),
     ],
     function (req, res, next) {
 
