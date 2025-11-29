@@ -1,18 +1,30 @@
 <!doctype html>
 <html>
   <head>
-    <title>Register for <%=shopData.shopName%></title>
-    <link rel="stylesheet"  type="text/css" href="/main.css" />
+    <title>Register for <%= shopData.shopName %></title>
+    <link rel="stylesheet" type="text/css" href="/main.css" />
   </head>
+
   <body>
-    <h1>Register for <%=shopData.shopName%></h1>
+    <h1>Register for <%= shopData.shopName %></h1>
+
+    <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+      <div class="error-box">
+        <ul>
+          <% errors.forEach(err => { %>
+            <li><%= err.msg %></li>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
+
     <form method="POST" action="registered">
-        <p>First name: <input id="first" type="text" name="first" required/></p>
-        <p>Last name: <input id="last" type="text" name="last" required/></p>
-        <p>User name: <input id="username" type="text" name="username" required/></p>
-        <p>Email: <input id="email" type="email" name="email" required/></p>
-        <p>Password: <input id="password" type="password" name="password" required/></p>
-        <input type="submit" value="Register" />
-      </form>
+      <p>First name: <input id="first" type="text" name="first" required value="<%= formData ? formData.first : '' %>" /></p>
+      <p>Last name: <input id="last" type="text" name="last" required value="<%= formData ? formData.last : '' %>" /></p>
+      <p>User name: <input id="username" type="text" name="username" required value="<%= formData ? formData.username : '' %>" /></p>
+      <p>Email: <input id="email" type="email" name="email" required value="<%= formData ? formData.email : '' %>" /></p>
+      <p>Password: <input id="password" type="password" name="password" required /></p>
+      <input type="submit" value="Register" />
+    </form>
   </body>
 </html>

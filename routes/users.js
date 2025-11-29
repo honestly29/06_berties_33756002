@@ -3,42 +3,64 @@ const express = require("express")
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const redirectLogin = require('../middleware/redirectLogin');
+const { check, validationResult } = require('express-validator');
 
 
 router.get('/register', function (req, res, next) {
-    res.render('register.ejs')
+    res.render('register.ejs', { 
+        errors: [], 
+        formData: {} 
+    });
 })
 
-router.post('/registered', function (req, res, next) {
-    const plainPassword = req.body.password;
-    const saltRounds = 10;
+router.post(
+    '/registered',
+    [
+        check('email')
+            .isEmail()
+            .withMessage('Please enter a valid email'),
 
-    bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) {
-        if (err) {
-            return next(err);
+        check('username')
+            .isLength({ min: 5, max: 20 })
+            .withMessage('Username must be between 5 and 20 characters')
+    ],
+    function (req, res, next) {
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.render('register', {
+                errors: errors.array(),
+                formData: req.body
+            });   
         }
-        // sql query to save new user to database
-        const sqlInsertUser = "INSERT INTO users (username, first_name, last_name, email, hashed_password) VALUES (?,?,?,?,?)";
 
-        // execute sql query
-        const newrecord = [req.body.username, req.body.first, req.body.last, req.body.email, hashedPassword];
+        const plainPassword = req.body.password;
+        const saltRounds = 10;
 
-        db.query(sqlInsertUser, newrecord, (err, result) => {
+        bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) {
             if (err) {
-                // Duplicate email or username error
-                if (err.code === "ER_DUP_ENTRY") {
-                    return res.send("Registration failed: That email or username already exists.");
+                return next(err);
+            }
+
+            const sqlInsertUser = "INSERT INTO users (username, first_name, last_name, email, hashed_password) VALUES (?,?,?,?,?)";
+            const newrecord = [req.body.username, req.body.first, req.body.last, req.body.email, hashedPassword];
+
+            db.query(sqlInsertUser, newrecord, (err, result) => {
+                if (err) {
+                    if (err.code === "ER_DUP_ENTRY") {
+                        return res.send("Registration failed: That email or username already exists.");
+                    }
+                    return res.send("Database error: " + err.message);
+                } else {
+                    let message = 'Hello ' + req.body.first + ' ' + req.body.last + ', you are now registered! We will send an email to ' + req.body.email;
+                    message;
+                    res.send(message);
                 }
-                return res.send("Database error: " + err.message);
-            }
-            else {
-                let result = 'Hello '+ req.body.first + ' '+ req.body.last +' you are now registered!  We will send an email to you at ' + req.body.email;
-                result += 'Your password is: '+ req.body.password +' and your hashed password is: '+ hashedPassword;
-                res.send(result);
-            }
+            });
         });
-    });       
-}); 
+    }
+);
+
 
 
 // Login page
