@@ -43,7 +43,7 @@ router.get('/weather', function(req, res, next){
             }
 
             let wmsg = `It is ${weather.main.temp}°C in ${weather.name}.` +
-                `<br>Humidity: ${weather.main.humidity}%`;
+                `Humidity: ${weather.main.humidity}%`;
 
             res.render('weather.ejs', { wmsg: wmsg, city: city });
 
