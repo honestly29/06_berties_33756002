@@ -1,36 +1,77 @@
 # Bertie’s Books – Web App
 
-A simple Node.js and Express web application built in the **Dynamic Web Applications** lab to demonstrate connecting a website to a MySQL database, using EJS templates, bcrypt for password hashing, dotenv for secure credentials, and handling routes for dynamic data display.
+A Node.js and Express web application built in the _Dynamic Web Applications_ lab.  
+The project demonstrates database integration, secure authentication, user sessions, sanitisation and validation of user input, API creation, and consuming external APIs (OpenWeather).
 
 ---
 
 ## Overview
 
-**Bertie’s Books** is a fictional online bookshop that:
+Bertie’s Books is a fictional online bookshop that includes:
 
-- Connects to a **MySQL** database to store and retrieve data.
-- Displays a full list of all available books.
-- Lets users **add new books** to the database via a form.
-- Provides a **search** feature to find books by title (exact and partial matches).
+### Bookshop functionality
+
+- Connects to a **MySQL** database to store and retrieve books and users.
+- Displays a full list of available books.
+- Lets users **add new books** via a form (with validation and sanitisation).
+- Provides a **search** feature to find books by title.
 - Includes a **bargain books** page showing all books priced under £20.
-- Allows users to **register** by submitting a username, name, email, and password.
-- Hashes passwords securely using **bcrypt** before storing them in the database.
-- Allows users to **log in**, comparing the supplied password with the stored hash.
-- Handles users trying to register with usernames/passwords that already exist.
 
-The application demonstrates full-stack integration - combining Node.js server logic, EJS views, SQL queries, form handling, bcrypt hashing, and secure environment variable management.
+### User accounts & authentication
 
----
+- Users can **register** using a username, name, email and password.
+- Passwords are hashed using **bcrypt** before being stored in the database.
+- Server-side validation using **express-validator**:
+  - Valid email format
+  - Username length between 5 and 20 characters
+  - Password length at least 8 characters
+- User input is sanitised using **express-sanitizer** to prevent XSS.
+- Users can **log in** with session management using **express-session**.
+- Protected routes (e.g. user list, audit log) use a redirect middleware to ensure only logged-in users can access them.
+- Includes a **logout** route that destroys the session.
+- Login attempts are logged in an audit table (success/failure).
+
+### Weather feature
+
+- Includes a `/weather` page that uses the **OpenWeather API**.
+- Displays human-readable weather information (temperature and humidity).
+- Users can enter any city using an interactive form.
+- Handles errors (invalid city, bad API response, missing API key).
+- The API key is stored securely using **dotenv**.
+
+### Internal API
+
+The application provides a JSON API at `/api/books` that supports:
+
+- Returning all books.
+- Searching by title using `?search=keyword`.
+- Filtering by price range using `?minprice=5&maxprice=20`.
+- Sorting results using `?sort=name` or `?sort=price`.
+- Full sanitisation of query parameters.
+- Protection against SQL injection using parameterised queries.
+
+This project demonstrates full-stack concepts:
+
+- Server-side rendering (EJS)
+- Secure authentication (bcrypt + sessions)
+- External API consumption
+- REST API creation
+- SQL database integration
+- Data validation
+- Input sanitisation
 
 ## Technologies Used
 
-- **Node.js** with **Express**
-- **MySQL** (via the `mysql2` library)
-- **EJS** (Embedded JavaScript templates)
-- **bcrypt** for password hashing
-- **dotenv** for securing database credentials
-- **HTML5 / CSS**
-- **JavaScript**
+- Node.js + Express
+- MySQL (via `mysql2`)
+- EJS templating
+- bcrypt (password hashing)
+- express-session (session management)
+- express-validator (server-side validation)
+- express-sanitizer (XSS protection)
+- dotenv (secure environment variables)
+- request (calling the OpenWeather API)
+- HTML5, CSS, JavaScript
 
 ---
 
@@ -48,6 +89,7 @@ The application demonstrates full-stack integration - combining Node.js server l
    DB_USER=berties_books_app
    DB_PASSWORD=yourpassword
    DB_NAME=berties_books
+   WEATHER_API_KEY=your_api_key
    ```
 3. **Run the app**
    ```
@@ -57,6 +99,95 @@ The application demonstrates full-stack integration - combining Node.js server l
    http://localhost:8000/
 
 ---
+
+## API Documentation
+
+The application provides a REST API that allows external developers to access the Bertie’s Books catalogue in JSON format.
+
+### Endpoint
+
+`GET /api/books`
+
+### Description
+
+Returns a list of books stored in the database. The route accepts optional query parameters that filter and sort the results.
+
+---
+
+### Query parameters
+
+- `search`
+
+  - Filters books whose names contain the given substring.
+  - Example:
+    - `/api/books?search=world`
+
+- `minprice`
+
+  - Filters books with a price greater than or equal to this value.
+  - Example:
+    - `/api/books?minprice=5`
+
+- `maxprice`
+
+  - Filters books with a price less than or equal to this value.
+  - Example:
+    - `/api/books?maxprice=20`
+
+- Combined price range example:
+
+  - `/api/books?minprice=5&maxprice=10`
+
+- `sort`
+  - Sorts the results by a specific field. Allowed values:
+    - `name`
+    - `price`
+  - Example:
+    - `/api/books?sort=price`
+
+---
+
+### Examples
+
+- Return all books
+
+  - `/api/books`
+
+- Search for titles containing “world”
+
+  - `/api/books?search=world`
+
+- Books between £5 and £20
+
+  - `/api/books?minprice=5&maxprice=20`
+
+- Books priced under £10 sorted by name
+
+  - `/api/books?maxprice=10&sort=name`
+
+- Search + price range + sorting
+  - `/api/books?search=universe&minprice=5&maxprice=25&sort=price`
+
+---
+
+### Security and validation
+
+- All user-supplied query parameters are sanitised using `express-sanitizer` to protect against XSS-style attacks.
+- SQL queries use parameter placeholders `?` to prevent SQL injection.
+- Only known sort values are allowed to ensure malicious sort inputs cannot affect the SQL query.
+
+---
+
+### Response format
+
+All API responses are returned as JSON arrays of book objects. Example:
+
+```json
+[
+  { "id": 1, "name": "1984", "price": 8.99 },
+  { "id": 2, "name": "World Atlas", "price": 12.5 }
+]
+```
 
 ## Access Control Summary
 
@@ -68,6 +199,7 @@ Protected Routes:
 
 - /users/list: Only logged-in users can view the list of users.
 - /users/audit: Only logged-in users can view the audit log.
+- /books/addbook: Only logged-in users can add new books to the database.
 - /logout: Only available to logged-in users.
 
 Public Routes:
@@ -189,7 +321,7 @@ To track login activity and improve security, an audit logging system was implem
    - On correct password → a record is saved with `success = true`.
    - On incorrect password or unknown user → a record is saved with `success = false`.
 
-3. A new route `/users/audit` was added.  
+3. A new route `/users/audit` was added.
    This selects all audit records and displays them in a simple table for review.
 
 This feature makes it possible to view login behaviour, detect suspicious activity, and keep a basic audit trail of authentication events.
@@ -198,3 +330,7 @@ This feature makes it possible to view login behaviour, detect suspicious activi
 
 The application can be accessed at:
 http://www.doc.gold.ac.uk/usr/325/
+
+```
+
+```
